@@ -2,9 +2,8 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 
-torch==2.1.2
-torchvision==0.16.2
-torchaudio==2.1.2
+torch==2.5.1
+torchvision==0.20.1
 
 timm==0.9.12
 numpy==1.26.4
