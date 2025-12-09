@@ -3,7 +3,7 @@ uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 
 torch==2.5.1
-torchvision==0.20.1
+torchvision==0.24.1
 
 timm==0.9.12
 numpy==1.26.4
