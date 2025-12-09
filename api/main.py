@@ -366,5 +366,4 @@ async def predict_deepfake(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Error processing video: {str(e)}")
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    pass
