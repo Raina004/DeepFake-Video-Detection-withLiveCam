@@ -185,48 +185,40 @@ def frame_to_base64(frame):
     return base64.b64encode(buffer).decode()
 
 def create_heatmap(frames, predictions):
-    """Create a heatmap visualization showing deepfake regions"""
     if not frames:
         return None
-    
-    # Use the first frame as base
+
     base_frame = frames[0].copy()
     h, w = base_frame.shape[:2]
-    
-    # Create heatmap overlay - accumulate predictions
-    heatmap = np.zeros((h, w), dtype=np.float32)
-    
+
+    heatmap = np.zeros((h, w), dtype=np.uint8)
+
     with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
         for i, frame in enumerate(frames):
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = face_detection.process(rgb_frame)
-            
-            # If frame was predicted as fake, mark the face region
+
             if results.detections and i < len(predictions):
                 detection = results.detections[0]
                 bboxC = detection.location_data.relative_bounding_box
-                
+
                 x = int(bboxC.xmin * w)
                 y = int(bboxC.ymin * h)
                 box_w = int(bboxC.width * w)
                 box_h = int(bboxC.height * h)
+
                 
-                # Weight: 1.0 for fake frames, 0.2 for real frames
-                weight = 1.0 if predictions[i] == 1 else 0.2
-                heatmap[y:y+box_h, x:x+box_w] += weight
-    
-    # Normalize heatmap
-    if heatmap.max() > 0:
-        heatmap = (heatmap / heatmap.max() * 255).astype(np.uint8)
-    else:
-        heatmap = np.zeros_like(heatmap, dtype=np.uint8)
-    
-    # Apply colormap (red for high values)
-    heatmap_color = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-    
-    # Blend with original frame
+                if predictions[i] == 1:  # FAKE
+                    heatmap[y:y+box_h, x:x+box_w] = 255   # RED
+                else:  # REAL
+                    heatmap[y:y+box_h, x:x+box_w] = 100   # GREEN
+
+
+    heatmap_color = np.zeros((h, w, 3), dtype=np.uint8)
+    heatmap_color[heatmap == 255] = [0, 0, 255]   
+    heatmap_color[heatmap == 100] = [0, 255, 0]   
     result = cv2.addWeighted(base_frame, 0.6, heatmap_color, 0.4, 0)
-    
+
     return result
 
 @app.on_event("startup")
@@ -366,4 +358,5 @@ async def predict_deepfake(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Error processing video: {str(e)}")
 
 if __name__ == "__main__":
-    pass
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

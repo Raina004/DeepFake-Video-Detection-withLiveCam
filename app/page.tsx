@@ -40,7 +40,9 @@ export default function DeepfakeDetector() {
 
     if (videoRef.current) {
       videoRef.current.srcObject = stream
-      await videoRef.current.play() // ✅ THIS FIXES BLACK SCREEN
+      videoRef.current.muted = true
+      videoRef.current.playsInline = true
+      await videoRef.current.play()   // ✅ THIS LINE FIXES BLACK SCREEN
     }
 
     setIsRecording(true)
@@ -50,9 +52,7 @@ export default function DeepfakeDetector() {
     mediaRecorderRef.current = mediaRecorder
 
     mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) {
-        chunksRef.current.push(e.data)
-      }
+      if (e.data.size > 0) chunksRef.current.push(e.data)
     }
 
     mediaRecorder.onstop = () => {
@@ -61,7 +61,7 @@ export default function DeepfakeDetector() {
       setFile(new File([blob], "webcam-video.webm", { type: "video/webm" }))
 
       if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((track) => track.stop())
+        mediaStreamRef.current.getTracks().forEach(track => track.stop())
       }
 
       setIsRecording(false)
@@ -70,7 +70,7 @@ export default function DeepfakeDetector() {
     mediaRecorder.start()
   } catch (error) {
     console.error("Webcam error:", error)
-    setErrorMsg("Unable to access webcam. Please check permissions.")
+    setErrorMsg("Unable to access webcam. Please allow camera permission.")
   }
 }
 
@@ -95,7 +95,7 @@ export default function DeepfakeDetector() {
     }, 500)
 
     try {
-      const response = await fetch("http://localhost:8000/predict", {
+      const response = await fetch("http://127.0.0.1:8000/predict", {
         method: "POST",
         body: formData,
       })
@@ -164,14 +164,7 @@ export default function DeepfakeDetector() {
                 </button>
               )}
               {isRecording && (
-                <video
-  ref={videoRef}
-  autoPlay
-  muted
-  playsInline
-  className="w-full max-w-sm rounded-lg border bg-black"
-/>
-
+                <video ref={videoRef} autoPlay playsInline className="w-full max-w-sm rounded-lg border bg-black" />
               )}
             </div>
 
@@ -316,4 +309,4 @@ export default function DeepfakeDetector() {
       </main>
     </div>
   )
-} 
+}
